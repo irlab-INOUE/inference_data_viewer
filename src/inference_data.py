@@ -98,12 +98,20 @@ class InferenceData():
 
 
     def ShowRID(self, RID):
-        fig, ax = plt.subplots(self.Nr, self.Nt)
         x = np.arange(self.intensity_max)
-        for i in range(self.Nr):
-            for j in range(self.Nt):
-                y = RID[i, j]
-                ax[self.Nr-1-i, self.Nt-1-j].bar(x, y)
-                ax[self.Nr-1-i, self.Nt-1-j].set_title("(%d, %d)" % (self.Nr, self.Nt))
-        plt.show()
+        while(True):
+            str_Nr = input("Nr = ")
+            str_Nt = input("Nt = ")
+            # end
+            if str_Nr == "" and str_Nt == "":
+                break
 
+            Nr_range = [int(str_Nr[0:str_Nr.find()-1])]
+            Nt_range = []
+            fig, ax = plt.subplots(self.Nr, self.Nt, squeeze=False, tight_layout=True, sharex=True, sharey=True)
+            for i in range(self.Nr):
+                for j in range(self.Nt):
+                    y = RID[i, j]
+                    ax[self.Nr-1-i, self.Nt-1-j].bar(x, y)
+                    ax[self.Nr-1-i, self.Nt-1-j].set_title("(%d, %d)" % (self.Nr, self.Nt))
+            plt.show()
