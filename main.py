@@ -18,7 +18,7 @@ infe_data = inference_data.InferenceData()
 
 def start_server():
     # create log dir
-    log_path = '/Users/senapo/IRLab/log_data/%s/%s/%s/%s' % ( datetime.datetime.today().strftime('%Y')\
+    log_path = '/home/sena/log_data/%s/%s/%s/%s' % ( datetime.datetime.today().strftime('%Y')\
                                                             , datetime.datetime.today().strftime('%m')\
                                                             , datetime.datetime.today().strftime('%d')\
                                                             , datetime.datetime.today().strftime('%H%M%S') )
@@ -60,12 +60,12 @@ def start_server():
         socket.send(str(size_of_data).encode())
         oneshot = []
         for i in range(0, size_of_data):
-            data = sock1.recv()
+            data = socket.recv()
             point = struct.unpack('ddddddd', data)
             _point = [point[0], point[1], point[2], point[6]]
             oneshot.append(_point)
             rpl = "done"
-            sock1.send((rpl.encode()))
+            socket.send((rpl.encode()))
         print("done")
 
         # create timestamp dir

@@ -14,5 +14,5 @@ endif(APPLE)
 
 find_package (OpenCV REQUIRED)
 
-add_executable (send_urg src/send_urg.cpp)	# src/GetUrg3d.cpp src/matrix.cpp
-target_link_libraries(send_urg zmq)			# urg3d ${OpenCV_LIBRARIES}
+add_executable (send_urg src/send_urg.cpp src/GetUrg3d.cpp src/matrix.cpp)	# src/GetUrg3d.cpp src/matrix.cpp
+target_link_libraries(send_urg zmq urg3d ${OpenCV_LIBRARIES})			# urg3d ${OpenCV_LIBRARIES}

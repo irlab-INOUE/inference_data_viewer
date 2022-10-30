@@ -1,6 +1,6 @@
 #include <iostream>
 #include "zmq.hpp"
-//#include "GetUrg3d.h"
+#include "GetUrg3d.h"
 
 int main(int argc, char *argv[]) {
 
@@ -10,7 +10,6 @@ int main(int argc, char *argv[]) {
 	socket.connect("tcp://localhost:5555");
 	std::cout << "Start zmq server.\n";
 
-	/*
 	// 3D-LiDAR setting
 	std::string addr = "172.16.20.214";
 	long port = 10904;
@@ -19,7 +18,6 @@ int main(int argc, char *argv[]) {
 		std::cerr << "Error: Can't open 3D-LiDAR. Stoped." << std::endl;
 		return -1;
 	}
-	*/
 
 	while(true){
 		// trigger
