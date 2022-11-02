@@ -11,6 +11,8 @@ import os
 import struct
 import datetime
 import json
+import glob
+import matplotlib.pyplot as plt
 
 from src import inference_data
 infe_data = inference_data.InferenceData()
@@ -91,9 +93,33 @@ def start_server():
 
         # show rid
         infe_data.ShowRID(RID)
-        
+
+
+def log_viewer():
+    path_list = sorted(glob.glob('/Users/senapo/Desktop/1022/log_20221022114049/*'))
+    data_num = len(path_list)
+    print(data_num)
+    x = np.arange(1600)
+    for num in range(data_num):
+        if(".txt" in path_list[num]):
+            continue
+        if(".png" in path_list[num]):
+            continue
+        print(path_list[num])
+        RID = np.load("%s/rid.npy" % path_list[num])
+        Nr = RID.shape[0]
+        Nt = RID.shape[1]
+        for i in range(Nr):
+            for j in range(Nt):
+                func = RID[i, j]
+                plt.plot(x, func)
+                plt.show()
+                print("[%d,%d] " % (i, j), end="", flush=True)
+        print()
+
 
 
 if __name__ == "__main__":
-    start_server()
+    #start_server()
+    log_viewer()
 

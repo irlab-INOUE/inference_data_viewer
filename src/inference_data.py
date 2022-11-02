@@ -1,13 +1,5 @@
-import os
-import sys
-import glob
-import json
-import pickle
-import tensorflow as tf
 import numpy as np
-import math
-import random
-from tqdm import tqdm
+import json
 
 
 class InferenceData():
