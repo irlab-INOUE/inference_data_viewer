@@ -156,7 +156,7 @@ class InferenceData():
                 jt_end = int( str_jt[str_jt.find(" ")+1 : ] )
                 jt_num = jt_end - jt_start + 1
 
-            fig, ax = plt.subplots(ir_num, jt_num, squeeze=False, tight_layout=True, sharex=True, sharey=True)
+            fig, ax = plt.subplots(ir_num, jt_num, squeeze=False, tight_layout=True, sharex=True, sharey=True, figsize=(12,8))
             for i in range(ir_num):
                 for j in range(jt_num):
                     # plot RID
