@@ -4,7 +4,7 @@ project(getdistance)
 
 include_directories(/usr/include ${PROJECT_SOURCE_DIR})
 if(APPLE)
-  include_directories(/usr/local/include /opt/homebrew/include)
+	include_directories(/usr/local/include /opt/homebrew/include)
 endif(APPLE)
 
 link_directories(${PROJECT_SOURCE_DIR})
@@ -14,5 +14,8 @@ endif(APPLE)
 
 find_package (OpenCV REQUIRED)
 
-add_executable (send_urg src/send_urg.cpp src/GetUrg3d.cpp src/matrix.cpp)	# src/GetUrg3d.cpp src/matrix.cpp
-target_link_libraries(send_urg zmq urg3d ${OpenCV_LIBRARIES})			# urg3d ${OpenCV_LIBRARIES}
+#add_executable (send_urg src/send_urg.cpp src/GetUrg3d.cpp src/matrix.cpp)
+#target_link_libraries(send_urg zmq urg3d ${OpenCV_LIBRARIES})
+
+add_executable (send_urg_dummy src/send_urg_dummy.cpp)
+target_link_libraries(send_urg_dummy zmq)

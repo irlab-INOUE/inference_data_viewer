@@ -1,10 +1,11 @@
 import numpy as np
 import json
+import matplotlib.pyplot as plt
 
 
 class InferenceData():
-    def __init__(self):
-        config_path = 'network/config.txt'
+    def __init__(self, network_path):
+        config_path = f'{network_path}/config.txt'
         with open(config_path, 'r') as filename:
             self.config = json.load(filename)
 
@@ -24,23 +25,16 @@ class InferenceData():
         self.height = int(2 * self.r_max / self.pixel_size)  #画像の縦方向（xに対応）
         self.width = int(2 * self.r_max / self.pixel_size)   #画像の横方向（yに対応）
 
-        self.Nr = self.config['Nr']
-        self.Nt = self.config['Nt']
         self.label_size = self.config['label_size']
 
         self.avoid_label = self.config['avoid_label']
         self.avoid_th = self.config['avoid_th']
 
-        self.r_min = self.config['r_min']
-        self.r_max = self.config['r_max']
-        self.Nr = self.config['Nr']
-        self.t_min = self.config['t_min']
-        self.t_max = self.config['t_max']
-        self.Nt = self.config['Nt']
+        self.network_path = network_path
 
 
     def LoadLUT(self):
-        LUT = np.load('network/lookup_table.npy')
+        LUT = np.load(f'{self.network_path}/lookup_table.npy')
         return LUT
 
 
@@ -66,6 +60,12 @@ class InferenceData():
                 if (r_i != -1) and (t_j != -1):
                     divided_data[r_i][t_j].append(intensity)
 
+        # 各格子のデータ数を算出
+        datanum_grid = np.empty((self.Nr, self.Nt), dtype='uint64')
+        for i in range(self.Nr):
+            for j in range(self.Nt):
+                datanum_grid[i, j] = len(divided_data[i][j])
+
         # 反射強度分布に変換する
         rid_data = np.zeros((self.Nr, self.Nt, self.intensity_max))
         for i in range(self.Nr):
@@ -76,34 +76,70 @@ class InferenceData():
                         intensity = int(divided_data[i][j][num])
                         rid_data[i, j, intensity] += 1
                     rid_data[i, j] = rid_data[i, j] / datanum_on_grid
-        return rid_data
+        return rid_data, datanum_grid
 
 
-    def ShowOneshot(self, oneshot):
-        fig = plt.figure()
+    def ShowOneshot(self, oneshot, timestamp_path):
+        fig = plt.figure(figsize=(12, 8))
         ax = fig.add_subplot(projection='3d')
+        ax.set_xlabel("x-axis")
+        ax.set_ylabel("y-axis")
+        ax.set_zlabel("z-axis")
+        x_min, x_max = -1, 4
+        y_min, y_max = -4, 4
+        z_min, z_max = -2, 1
+        ax.set_xlim3d(x_min, x_max)
+        ax.set_ylim3d(y_min, y_max)
+        ax.set_zlim3d(z_min, z_max)
+        ax.set_box_aspect((x_max - x_min, y_max - y_min, z_max - z_min))
+        ax.view_init(elev=20, azim=200)
         x = oneshot[:, 0]
         y = oneshot[:, 1]
         z = oneshot[:, 2]
         ax.scatter(x, y, z, s=1)
+        plt.savefig(f'{timestamp_path}/oneshot.pdf')
         plt.show()
 
 
-    def ShowRID(self, RID):
+    def ShowRID(self, RID, datanum_grid, timestamp_path):
         x = np.arange(self.intensity_max)
+        fig_num = 0
         while(True):
-            str_Nr = input("Nr = ")
-            str_Nt = input("Nt = ")
-            # end
-            if str_Nr == "" and str_Nt == "":
+            str_ir = input(f" ir(0~{self.Nr-1}) = ")
+            str_jt = input(f" jt(0~{self.Nt-1}) = ")
+
+            # break
+            if str_ir == "" and str_jt == "":
+                print("-----")
                 break
 
-            Nr_range = [int(str_Nr[0:str_Nr.find()-1])]
-            Nt_range = []
-            fig, ax = plt.subplots(self.Nr, self.Nt, squeeze=False, tight_layout=True, sharex=True, sharey=True)
-            for i in range(self.Nr):
-                for j in range(self.Nt):
-                    y = RID[i, j]
-                    ax[self.Nr-1-i, self.Nt-1-j].bar(x, y)
-                    ax[self.Nr-1-i, self.Nt-1-j].set_title("(%d, %d)" % (self.Nr, self.Nt))
+            # continue
+            print()
+            if str_ir.find(" ") == -1:
+                ir_start = int( str_ir )
+                ir_end = int( str_ir )
+                ir_num = 1
+            else:
+                ir_start = int( str_ir[0 : str_ir.find(" ")] )
+                ir_end = int( str_ir[str_ir.find(" ")+1 : -1] )
+                ir_num = ir_end - ir_start + 1
+
+            if str_jt.find(" ") == -1:
+                jt_start = int( str_jt )
+                jt_end = int( str_jt )
+                jt_num = 1
+            else:
+                jt_start = int( str_jt[0 : str_jt.find(" ")] )
+                jt_end = int( str_jt[str_jt.find(" ")+1 : ] )
+                jt_num = jt_end - jt_start + 1
+
+            fig, ax = plt.subplots(ir_num, jt_num, squeeze=False, tight_layout=True, sharex=True, sharey=True)
+            for i in range(ir_num):
+                for j in range(jt_num):
+                    y = RID[ir_start + i, jt_start + j]
+                    ax[ir_num - i - 1, jt_num - j - 1].bar(x, y)
+                    ax[ir_num - i - 1, jt_num - j - 1].set_title(f"({ir_start + i}, {jt_start + j}), {datanum_grid[ir_start + i, jt_start + j]}")
+            plt.savefig(f'{timestamp_path}/RID_{fig_num}.pdf')
             plt.show()
+            fig_num += 1
+

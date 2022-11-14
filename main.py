@@ -14,22 +14,35 @@ import json
 import glob
 import matplotlib.pyplot as plt
 
-from src import inference_data
-infe_data = inference_data.InferenceData()
 
+OS = 'Apple'
+if OS =='Apple':
+    OS_path = '/Users/senapo/IRLab/log_data'
+if OS =='Linux':
+    OS_path = '/home/sena/log_data'
+
+
+from src import inference_data
+# Nt = 9
+#network_path = f'{OS_path}/2022/11/06/network_050942'
+# Nt = 27
+#network_path = f'{OS_path}/2022/11/06/network_042609'
+network_path = f'{OS_path}/2022/11/06/network_042609'
+infe_data = inference_data.InferenceData(network_path)
 
 def start_server():
     # create log dir
-    log_path = '/home/sena/log_data/%s/%s/%s/%s' % ( datetime.datetime.today().strftime('%Y')\
-                                                            , datetime.datetime.today().strftime('%m')\
-                                                            , datetime.datetime.today().strftime('%d')\
-                                                            , datetime.datetime.today().strftime('%H%M%S') )
-    print("log directory : %s" % log_path)
+    year = datetime.datetime.today().strftime('%Y')
+    month = datetime.datetime.today().strftime('%m')
+    day = datetime.datetime.today().strftime('%d')
+    time = datetime.datetime.today().strftime('%H%M%S')
+    log_path = f'{OS_path}/{year}/{month}/{day}/network_{time}'
     os.makedirs(log_path, exist_ok=True)
+    print(f"log directory : {log_path}")
 
     # make condition file
     condition = {}
-    condition_path = "%s/condition.txt" % log_path
+    condition['network'] = network_path
     str_location = input("location : ")
     if str_location == "":
         str_location = "none"
@@ -38,10 +51,15 @@ def start_server():
     if str_weather == "":
         str_weather = "none"
     condition['weather'] = str_weather
+    str_temperature = input("temperature : ")
+    if str_weather == "":
+        str_weather = "none"
+    condition['temperature'] = str_temperature
     str_purpose = input("purpose : ")
     if str_purpose == "":
         str_purpose = "none"
     condition['purpose'] = str_purpose
+    condition_path = f'{log_path}/condition.txt'
     with open(condition_path, 'w') as filename:
         json.dump(condition, filename, sort_keys=True, indent=4)
 
@@ -49,6 +67,7 @@ def start_server():
     context = zmq.Context()
     socket = context.socket(zmq.REP)
     socket.bind("tcp://*:5555")
+    print("Start zmq server.\n ----- ")
 
     # load lookup table
     LUT = infe_data.LoadLUT()
@@ -68,31 +87,30 @@ def start_server():
             oneshot.append(_point)
             rpl = "done"
             socket.send((rpl.encode()))
-        print("done")
+        print(" finish.")
 
         # create timestamp dir
-        timestamp_path = "%s/%s" % ( log_path, datetime.datetime.today().strftime('%H%M%S%f') )
+        time = datetime.datetime.today().strftime('%H%M%S%f')
+        timestamp_path = f'{log_path}/{time}'
         os.makedirs(timestamp_path, exist_ok=True)
 
         # save oneshot data
         oneshot = np.array(oneshot)
         oneshot = oneshot * [1, -1, -1, 1]
-        oneshot_path = "%s/oneshot.txt" % timestamp_path
-        with open(data_path, 'w') as filename:
+        with open(f'{timestamp_path}/oneshot.txt', 'w') as filename:
             np.savetxt(filename, oneshot)
 
         # show oneshot
-        infe_data.ShowOneshot(oneshot)
+        infe_data.ShowOneshot(oneshot, timestamp_path)
 
         # oneshot -> reflection intensity distribution
-        RID = infe_data.CreateRID(LUT, oneshot)
+        RID, datanum_grid = infe_data.CreateRID(LUT, oneshot)
 
         # save rid data
-        rid_path = "%s/rid.npy" % timestamp_path
-        np.save(rid_path, RID)
+        np.save(f'{timestamp_path}/rid.npy', RID)
 
         # show rid
-        infe_data.ShowRID(RID)
+        infe_data.ShowRID(RID, datanum_grid, timestamp_path)
 
 
 def log_viewer():
@@ -106,7 +124,7 @@ def log_viewer():
         if(".png" in path_list[num]):
             continue
         print(path_list[num])
-        RID = np.load("%s/rid.npy" % path_list[num])
+        RID = np.load(f"{path_list[num]}/rid.npy")
         Nr = RID.shape[0]
         Nt = RID.shape[1]
         for i in range(Nr):
@@ -114,12 +132,44 @@ def log_viewer():
                 func = RID[i, j]
                 plt.plot(x, func)
                 plt.show()
-                print("[%d,%d] " % (i, j), end="", flush=True)
+                print(f"[{i},{j}] ", end="", flush=True)
+        print()
+
+
+def datanum_viewer():
+    #path_list = sorted(glob.glob('/Users/senapo/IRLab/log_data/2022/11/06/113001/*'))
+    path_list = sorted(glob.glob('/Users/senapo/IRLab/log_data/2022/11/06/113759/*'))
+    #path_list = sorted(glob.glob('/Users/senapo/IRLab/log_data/2022/11/06/114105/*'))
+    data_num = len(path_list)
+    x = np.arange(1600)
+    for num in range(data_num):
+        if(".txt" in path_list[num]):
+            continue
+        if(".png" in path_list[num]):
+            continue
+        print(path_list[num])
+
+        with open("%s/oneshot.txt" % path_list[num]) as f:
+            oneshot = np.loadtxt(f)
+
+        # load lookup table
+        LUT = infe_data.LoadLUT()
+
+        # oneshot -> reflection intensity distribution
+        RID, datanum_grid = infe_data.CreateRID(LUT, oneshot)
+
+        Nr = RID.shape[0]
+        Nt = RID.shape[1]
+        for i in range(Nr):
+            for j in range(Nt):
+                num = int(datanum_grid[i, j])
+                print(f"({i},{j}):{num}, ", end="", flush=True)
         print()
 
 
 
 if __name__ == "__main__":
-    #start_server()
-    log_viewer()
+    start_server()
+    #log_viewer()
+    #datanum_viewer()
 
