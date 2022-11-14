@@ -15,7 +15,7 @@ import glob
 import matplotlib.pyplot as plt
 
 
-OS = 'Apple'
+OS = 'Linux'
 if OS =='Apple':
     OS_path = '/Users/senapo/IRLab/log_data'
 if OS =='Linux':
