@@ -4,12 +4,6 @@
 
 int main(int argc, char *argv[]) {
 
-	// ZMQ setting
-	zmq::context_t context(1);
-	zmq::socket_t socket(context, zmq::socket_type::req);
-	socket.connect("tcp://localhost:5555");
-	std::cout << "Start zmq server.\n";
-
 	// 3D-LiDAR setting
 	std::string addr = "172.16.20.214";
 	long port = 10904;
@@ -19,13 +13,19 @@ int main(int argc, char *argv[]) {
 		return -1;
 	}
 
+	// ZMQ setting
+	zmq::context_t context(1);
+	zmq::socket_t socket(context, zmq::socket_type::req);
+	socket.connect("tcp://localhost:5555");
+	std::cout << "Start zmq server.\n  -----  \n";
+
 	while(true){
 		// trigger
 		std::cout << "Press Enter";
 		std::cin.get();
 
 		// Send LiDAR data
-		std::cout << "Sending LiDAR data...\n";
+		std::cout << "Sending LiDAR data..." << std::flush;
 		std::vector<pointUrg3d> data = urg3d.get1Frame();
 		// y, z は-符号をつけることで3D-LiDARの実装と同じ向きになる
 		// この段階では逆さまの状態で値を保存している
@@ -44,7 +44,7 @@ int main(int argc, char *argv[]) {
 			auto recv2 = socket.recv(rcv_msg, zmq::recv_flags::none);
 			std::string rpl = std::string(static_cast<char*>(rcv_msg.data()), rcv_msg.size());
 		}
-		std::cout << "finish.\n";
+		std::cout << "finish.\n  -----  \n1";
 	}
 	return 0;
 }
