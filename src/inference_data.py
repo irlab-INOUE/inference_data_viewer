@@ -1,4 +1,5 @@
 import numpy as np
+import math
 import json
 import matplotlib.pyplot as plt
 
@@ -66,17 +67,39 @@ class InferenceData():
             for j in range(self.Nt):
                 datanum_grid[i, j] = len(divided_data[i][j])
 
+        # 各格子の平均(mu)・標準偏差(sigma)を算出
+        mu_grid = np.empty((self.Nr, self.Nt))
+        for i in range(self.Nr):
+            for j in range(self.Nt):
+                total = sum(divided_data[i][j])
+                num = datanum_grid[i, j]
+                if num == 0:
+                    mu_grid[i, j] = 0
+                else:
+                    mu_grid[i, j] = total / num
+
+        sigma_grid = np.empty((self.Nr, self.Nt))
+        for i in range(self.Nr):
+            for j in range(self.Nt):
+                num = datanum_grid[i, j]
+                total = 0
+                for k in range(num):
+                    total += (divided_data[i][j][k] - mu_grid[i,j]) ** 2
+                sigma_hat_2 = total / num
+                sigma_grid[i, j] = math.sqrt(sigma_hat_2)
+
         # 反射強度分布に変換する
         rid_data = np.zeros((self.Nr, self.Nt, self.intensity_max))
         for i in range(self.Nr):
             for j in range(self.Nt):
-                datanum_on_grid = len(divided_data[i][j])
-                if datanum_on_grid != 0:
-                    for num in range(datanum_on_grid):
-                        intensity = int(divided_data[i][j][num])
-                        rid_data[i, j, intensity] += 1
-                    rid_data[i, j] = rid_data[i, j] / datanum_on_grid
-        return rid_data, datanum_grid
+                # データ数が0の格子はスキップ
+                if datanum_grid[i, j] == 0:
+                    continue
+                for num in range(datanum_grid[i, j]):
+                    intensity = int( divided_data[i][j][num] )
+                    rid_data[i, j, intensity] += 1
+                rid_data[i, j] = rid_data[i, j] / datanum_grid[i, j]
+        return rid_data, datanum_grid, mu_grid, sigma_grid
 
 
     def ShowOneshot(self, oneshot, timestamp_path):
@@ -101,7 +124,7 @@ class InferenceData():
         plt.show()
 
 
-    def ShowRID(self, RID, datanum_grid, timestamp_path):
+    def ShowRID(self, RID, datanum_grid, mu_grid, sigma_grid, timestamp_path):
         x = np.arange(self.intensity_max)
         fig_num = 0
         while(True):
@@ -136,9 +159,25 @@ class InferenceData():
             fig, ax = plt.subplots(ir_num, jt_num, squeeze=False, tight_layout=True, sharex=True, sharey=True)
             for i in range(ir_num):
                 for j in range(jt_num):
+                    # plot RID
                     y = RID[ir_start + i, jt_start + j]
-                    ax[ir_num - i - 1, jt_num - j - 1].bar(x, y)
+                    ax[ir_num - i - 1, jt_num - j - 1].bar(x, y, color='tab:blue')
+                    num = datanum_grid[ir_start, jt_start]
+                    ax[ir_num - i - 1, jt_num - j - 1].text(1300, 0.100, f"num={num}", horizontalalignment='left', verticalalignment='top', color='tab:blue')
+                    # plot mu
+                    mu = int( mu_grid[ir_start + i, jt_start + j] )
+                    ax[ir_num - i - 1, jt_num - j - 1].vlines(x=mu,ymin=0, ymax=0.1, ls='-', color='tab:orange')
+                    ax[ir_num - i - 1, jt_num - j - 1].text(1300, 0.095, f"mu={mu}", horizontalalignment='left', verticalalignment='top', color='tab:orange')
+                    # plot sigma
+                    sigma = int( sigma_grid[ir_start + i, jt_start + j] )
+                    ax[ir_num - i - 1, jt_num - j - 1].hlines(y=0.09, xmin=mu-(sigma/2), xmax=mu+(sigma/2), ls='-', color='tab:green')
+                    ax[ir_num - i - 1, jt_num - j - 1].text(1300, 0.090, f"sigma={sigma}", horizontalalignment='left', verticalalignment='top', color='tab:green')
+                    # setting
                     ax[ir_num - i - 1, jt_num - j - 1].set_title(f"({ir_start + i}, {jt_start + j}), {datanum_grid[ir_start + i, jt_start + j]}")
+                    ax[ir_num - i - 1, jt_num - j - 1].set_xlim(0, self.intensity_max)
+                    ax[ir_num - i - 1, jt_num - j - 1].set_ylim(0, 0.11)
+                    ax[ir_num - i - 1, jt_num - j - 1].set_xlabel("x-axis")
+                    ax[ir_num - i - 1, jt_num - j - 1].set_ylabel("y-axis")
             plt.savefig(f'{timestamp_path}/RID_{fig_num}.pdf')
             plt.show()
             fig_num += 1
