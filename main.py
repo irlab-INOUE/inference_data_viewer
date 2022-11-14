@@ -104,13 +104,13 @@ def start_server():
         infe_data.ShowOneshot(oneshot, timestamp_path)
 
         # oneshot -> reflection intensity distribution
-        RID, datanum_grid = infe_data.CreateRID(LUT, oneshot)
+        RID, datanum_grid, mu_grid, sigma_grid = infe_data.CreateRID(LUT, oneshot)
 
         # save rid data
         np.save(f'{timestamp_path}/rid.npy', RID)
 
         # show rid
-        infe_data.ShowRID(RID, datanum_grid, timestamp_path)
+        infe_data.ShowRID(RID, datanum_grid, mu_grid, sigma_grid, timestamp_path)
 
 
 def log_viewer():
