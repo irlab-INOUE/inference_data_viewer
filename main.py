@@ -15,7 +15,7 @@ import glob
 import matplotlib.pyplot as plt
 
 
-OS = 'Linux'
+OS = 'Apple'
 if OS =='Apple':
     OS_path = '/Users/senapo/IRLab/log_data'
 if OS =='Linux':
@@ -24,19 +24,18 @@ if OS =='Linux':
 
 from src import inference_data
 # Nt = 9
-#network_path = f'{OS_path}/2022/11/06/network_050942'
+network_path = f'{OS_path}/2022/11/06/network_050942'
 # Nt = 27
 #network_path = f'{OS_path}/2022/11/06/network_042609'
-network_path = f'{OS_path}/2022/11/06/network_042609'
 infe_data = inference_data.InferenceData(network_path)
 
-def start_server():
+def scan_viewer():
     # create log dir
     year = datetime.datetime.today().strftime('%Y')
     month = datetime.datetime.today().strftime('%m')
     day = datetime.datetime.today().strftime('%d')
     time = datetime.datetime.today().strftime('%H%M%S')
-    log_path = f'{OS_path}/{year}/{month}/{day}/network_{time}'
+    log_path = f'{OS_path}/{year}/{month}/{day}/scanview_{time}'
     os.makedirs(log_path, exist_ok=True)
     print(f"log directory : {log_path}")
 
@@ -114,7 +113,19 @@ def start_server():
 
 
 def log_viewer():
-    path_list = sorted(glob.glob('/Users/senapo/Desktop/1022/log_20221022114049/*'))
+    # create log dir
+    year = datetime.datetime.today().strftime('%Y')
+    month = datetime.datetime.today().strftime('%m')
+    day = datetime.datetime.today().strftime('%d')
+    time = datetime.datetime.today().strftime('%H%M%S')
+    log_path = f'{OS_path}/{year}/{month}/{day}/logview_{time}'
+    os.makedirs(log_path, exist_ok=True)
+    print(f"log directory : {log_path}")
+
+    # load lookup table
+    LUT = infe_data.LoadLUT()
+
+    path_list = sorted(glob.glob('/Users/senapo/IRLab/log_data/2022/11/14/network_172609/*'))
     data_num = len(path_list)
     print(data_num)
     x = np.arange(1600)
@@ -124,52 +135,29 @@ def log_viewer():
         if(".png" in path_list[num]):
             continue
         print(path_list[num])
-        RID = np.load(f"{path_list[num]}/rid.npy")
-        Nr = RID.shape[0]
-        Nt = RID.shape[1]
-        for i in range(Nr):
-            for j in range(Nt):
-                func = RID[i, j]
-                plt.plot(x, func)
-                plt.show()
-                print(f"[{i},{j}] ", end="", flush=True)
-        print()
+        oneshot = np.loadtxt(f'{path_list[num]}/oneshot.txt')
 
+        # create timestamp dir
+        time = datetime.datetime.today().strftime('%H%M%S%f')
+        timestamp_path = f'{log_path}/{time}'
+        os.makedirs(timestamp_path, exist_ok=True)
 
-def datanum_viewer():
-    #path_list = sorted(glob.glob('/Users/senapo/IRLab/log_data/2022/11/06/113001/*'))
-    path_list = sorted(glob.glob('/Users/senapo/IRLab/log_data/2022/11/06/113759/*'))
-    #path_list = sorted(glob.glob('/Users/senapo/IRLab/log_data/2022/11/06/114105/*'))
-    data_num = len(path_list)
-    x = np.arange(1600)
-    for num in range(data_num):
-        if(".txt" in path_list[num]):
-            continue
-        if(".png" in path_list[num]):
-            continue
-        print(path_list[num])
-
-        with open("%s/oneshot.txt" % path_list[num]) as f:
-            oneshot = np.loadtxt(f)
-
-        # load lookup table
-        LUT = infe_data.LoadLUT()
+        # show oneshot
+        infe_data.ShowOneshot(oneshot, timestamp_path)
 
         # oneshot -> reflection intensity distribution
-        RID, datanum_grid = infe_data.CreateRID(LUT, oneshot)
+        RID, datanum_grid, mu_grid, sigma_grid = infe_data.CreateRID(LUT, oneshot)
 
-        Nr = RID.shape[0]
-        Nt = RID.shape[1]
-        for i in range(Nr):
-            for j in range(Nt):
-                num = int(datanum_grid[i, j])
-                print(f"({i},{j}):{num}, ", end="", flush=True)
-        print()
+        # save rid data
+        np.save(f'{timestamp_path}/rid.npy', RID)
+
+        # show rid
+        infe_data.ShowRID(RID, datanum_grid, mu_grid, sigma_grid, timestamp_path)
+
 
 
 
 if __name__ == "__main__":
-    start_server()
-    #log_viewer()
-    #datanum_viewer()
+    #scan_viewer()
+    log_viewer()
 
