@@ -24,10 +24,10 @@ if OS =='Linux':
 
 from src import inference_data
 # Nt = 9
-#network_path = f'{OS_path}/2022/11/06/network_050942'
+network_path = f'{OS_path}/2022/11/06/network_050942'
 # Nt = 27
 #network_path = f'{OS_path}/2022/11/06/network_042609'
-network_path = f'{OS_path}/2022/11/06/network_042609'
+#network_path = f'{OS_path}/2022/11/06/network_042609'
 infe_data = inference_data.InferenceData(network_path)
 
 def start_server():
