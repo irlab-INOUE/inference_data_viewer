@@ -44,7 +44,7 @@ int main(int argc, char *argv[]) {
 			auto recv2 = socket.recv(rcv_msg, zmq::recv_flags::none);
 			std::string rpl = std::string(static_cast<char*>(rcv_msg.data()), rcv_msg.size());
 		}
-		std::cout << "finish.\n  -----  \n1";
+		std::cout << "finish.\n  -----  \n";
 	}
 	return 0;
 }

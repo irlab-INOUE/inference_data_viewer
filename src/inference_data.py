@@ -103,7 +103,7 @@ class InferenceData():
 
 
     def ShowOneshot(self, oneshot, timestamp_path):
-        fig = plt.figure(figsize=(12, 8))
+        fig = plt.figure(figsize=(16, 9))
         ax = fig.add_subplot(projection='3d')
         ax.set_xlabel("x-axis")
         ax.set_ylabel("y-axis")
@@ -156,28 +156,33 @@ class InferenceData():
                 jt_end = int( str_jt[str_jt.find(" ")+1 : ] )
                 jt_num = jt_end - jt_start + 1
 
-            fig, ax = plt.subplots(ir_num, jt_num, squeeze=False, tight_layout=True, sharex=True, sharey=True, figsize=(12,8))
+            fig, ax = plt.subplots(ir_num, jt_num, squeeze=False, tight_layout=True, sharex=True, sharey=True, figsize=(16,9))
+            style_xmin, style_xmax = 200, 700
+            style_ymin, style_ymax = 0, 0.035
             for i in range(ir_num):
                 for j in range(jt_num):
                     # plot RID
                     y = RID[ir_start + i, jt_start + j]
                     ax[ir_num - i - 1, jt_num - j - 1].bar(x, y, color='tab:blue')
-                    num = datanum_grid[ir_start, jt_start]
-                    ax[ir_num - i - 1, jt_num - j - 1].text(1300, 0.100, f"num={num}", horizontalalignment='left', verticalalignment='top', color='tab:blue')
+                    num = datanum_grid[ir_start + i, jt_start + j]
+                    ax[ir_num - i - 1, jt_num - j - 1].text(style_xmax-50, style_ymax-0.001, f"num={num}", horizontalalignment='right', verticalalignment='top', color='tab:blue', backgroundcolor='w')
+
                     # plot mu
                     mu = int( mu_grid[ir_start + i, jt_start + j] )
-                    ax[ir_num - i - 1, jt_num - j - 1].vlines(x=mu,ymin=0, ymax=0.1, ls='-', color='tab:orange')
-                    ax[ir_num - i - 1, jt_num - j - 1].text(1300, 0.095, f"mu={mu}", horizontalalignment='left', verticalalignment='top', color='tab:orange')
+                    ax[ir_num - i - 1, jt_num - j - 1].vlines(x=mu,ymin=style_ymax-0.006, ymax=style_ymax-0.004, ls='-', color='tab:orange')
+                    ax[ir_num - i - 1, jt_num - j - 1].text(style_xmax-50, style_ymax-0.002, f"mu={mu}", horizontalalignment='right', verticalalignment='top', color='tab:orange', backgroundcolor='w')
+
                     # plot sigma
                     sigma = int( sigma_grid[ir_start + i, jt_start + j] )
-                    ax[ir_num - i - 1, jt_num - j - 1].hlines(y=0.09, xmin=mu-(sigma/2), xmax=mu+(sigma/2), ls='-', color='tab:green')
-                    ax[ir_num - i - 1, jt_num - j - 1].text(1300, 0.090, f"sigma={sigma}", horizontalalignment='left', verticalalignment='top', color='tab:green')
+                    ax[ir_num - i - 1, jt_num - j - 1].hlines(y=style_ymax-0.005, xmin=mu-(sigma/2), xmax=mu+(sigma/2), ls='-', color='tab:green')
+                    ax[ir_num - i - 1, jt_num - j - 1].text(style_xmax-50, style_ymax-0.003, f"sigma={sigma}", horizontalalignment='right', verticalalignment='top', color='tab:green', backgroundcolor='w')
+
                     # setting
-                    ax[ir_num - i - 1, jt_num - j - 1].set_title(f"({ir_start + i}, {jt_start + j}), {datanum_grid[ir_start + i, jt_start + j]}")
-                    ax[ir_num - i - 1, jt_num - j - 1].set_xlim(0, self.intensity_max)
-                    ax[ir_num - i - 1, jt_num - j - 1].set_ylim(0, 0.11)
-                    ax[ir_num - i - 1, jt_num - j - 1].set_xlabel("x-axis")
-                    ax[ir_num - i - 1, jt_num - j - 1].set_ylabel("y-axis")
+                    ax[ir_num - i - 1, jt_num - j - 1].set_title(f"({ir_start + i}, {jt_start + j})")
+                    ax[ir_num - i - 1, jt_num - j - 1].set_xlim(style_xmin, style_xmax)
+                    ax[ir_num - i - 1, jt_num - j - 1].set_ylim(style_ymin, style_ymax)
+                    #ax[ir_num - i - 1, jt_num - j - 1].set_xlabel("x-axis")
+                    #ax[ir_num - i - 1, jt_num - j - 1].set_ylabel("y-axis")
             plt.savefig(f'{timestamp_path}/RID_{fig_num}.pdf')
             plt.show()
             fig_num += 1
